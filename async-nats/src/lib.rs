@@ -250,6 +250,7 @@ pub enum Command {
     },
     TryFlush,
     Connect(ConnectInfo),
+    Close,
 }
 
 /// `ClientOp` represents all actions of `Client`.
@@ -318,8 +319,11 @@ impl ConnectionHandler {
             select! {
                 maybe_command = receiver.recv().fuse() => {
                     match maybe_command {
-                        Some(command) => if let Err(err) = self.handle_command(command).await {
-                            error!("error handling command {}", err);
+                        Some(command) => match command {
+                            Command::Close => break,
+                            _ => if let Err(err) = self.handle_command(command).await {
+                                    error!("error handling command {}", err);
+                                  }
                         }
                         None => {
                             break;
@@ -561,6 +565,7 @@ impl ConnectionHandler {
                     self.handle_disconnect().await?;
                 }
             }
+            _ => panic!("logic error!"),
         }
 
         Ok(())
