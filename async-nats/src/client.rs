@@ -66,6 +66,14 @@ pub struct Client {
 }
 
 impl Client {
+    pub async fn close(&self) -> Result<(), Error> {
+        self.sender
+            .send(Command::Close)
+            .await
+            .map_err(PublishError)?;
+        Ok(())
+    }
+
     pub(crate) fn new(
         info: tokio::sync::watch::Receiver<ServerInfo>,
         state: tokio::sync::watch::Receiver<State>,
